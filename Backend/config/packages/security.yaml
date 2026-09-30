@@ -1,0 +1,62 @@
+security:
+    password_hashers:
+        App\Entity\User:
+            algorithm: bcrypt
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        internal_webhook:
+            pattern: ^/api/v1/internal
+            stateless: true
+            security: false
+
+        login:
+            pattern: ^/api/v1/auth/login
+            stateless: true
+            json_login:
+                check_path: /api/v1/auth/login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+            user_checker: App\Security\UserChecker
+            provider: app_user_provider
+
+        refresh:
+            pattern: ^/api/token/refresh
+            stateless: true
+            user_checker: App\Security\UserChecker
+            provider: app_user_provider
+
+        api:
+            pattern: ^/api
+            stateless: true
+            jwt: ~
+            user_checker: App\Security\UserChecker
+            provider: app_user_provider
+
+        health:
+            pattern: ^/health
+            security: false
+
+    access_control:
+        - { path: ^/health, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/auth/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/users, roles: ROLE_ADMIN }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+
+when@test:
+    security:
+        password_hashers:
+            App\Entity\User:
+                algorithm: plaintext

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ingestion & Security Lifecycle Admin API Contracts",
+  "description": "Contracts for Administrative routes to index meetings, generate chunk embeddings, and update permissions.",
+  "endpoints": {
+    "/api/admin/ingest": {
+      "method": "POST",
+      "summary": "Ingest and semantically index a new meeting transcript, summary, and decisions.",
+      "headers": {
+        "Authorization": { "type": "string", "description": "Bearer <access_token> (Must have ROLE_ADMIN)" }
+      },
+      "request": {
+        "content": {
+          "application/json": {
+            "type": "object",
+            "properties": {
+              "meeting_id": { "type": "string", "format": "uuid" },
+              "title": { "type": "string" },
+              "date": { "type": "string", "format": "date" },
+              "duration": { "type": "integer" },
+              "project_id": { "type": "string" },
+              "owner_id": { "type": "integer" },
+              "participant_ids": { 
+                "type": "array", 
+                "items": { "type": "integer" },
+                "description": "User IDs authorized to view this meeting."
+              },
+              "transcript": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "speaker": { "type": "string" },
+                    "content": { "type": "string" },
+                    "timestamp": { "type": "string" }
+                  },
+                  "required": ["speaker", "content"]
+                }
+              },
+              "summary": { "type": "string" },
+              "decisions": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "action_items": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "required": ["meeting_id", "title", "date", "duration", "project_id", "owner_id", "participant_ids", "transcript"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Meeting successfully ingested, chunked, and embedded local vector index updated.",
+          "content": {
+            "application/json": {
+              "type": "object",
+              "properties": {
+                "status": { "type": "string", "const": "success" },
+                "meeting_id": { "type": "string", "format": "uuid" },
+                "chunks_inserted": { "type": "integer" }
+              },
+              "required": ["status", "meeting_id", "chunks_inserted"]
+            }
+          }
+        },
+        "400": { "description": "Invalid input formatting or missing mandatory fields." },
+        "401": { "description": "Unauthorized access token." },
+        "403": { "description": "Forbidden - requires administrator privileges." }
+      }
+    },
+    "/api/admin/permissions": {
+      "method": "PUT",
+      "summary": "Instantly update user access rights / allowed participants for an indexed meeting without modifying embeddings.",
+      "headers": {
+        "Authorization": { "type": "string", "description": "Bearer <access_token> (Must have ROLE_ADMIN)" }
+      },
+      "request": {
+        "content": {
+          "application/json": {
+            "type": "object",
+            "properties": {
+              "meeting_id": { "type": "string", "format": "uuid" },
+              "participant_ids": { 
+                "type": "array", 
+                "items": { "type": "integer" }
+              }
+            },
+            "required": ["meeting_id", "participant_ids"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Permissions updated successfully in database metadata in less than 100ms.",
+          "content": {
+            "application/json": {
+              "type": "object",
+              "properties": {
+                "status": { "type": "string", "const": "success" },
+                "message": { "type": "string", "const": "Permissions metadata synced successfully." }
+              },
+              "required": ["status", "message"]
+            }
+          }
+        },
+        "404": { "description": "Meeting not found in the local index." },
+        "401": { "description": "Unauthorized." },
+        "403": { "description": "Forbidden." }
+      }
+    }
+  }
+}

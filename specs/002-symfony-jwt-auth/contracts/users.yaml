@@ -1,0 +1,236 @@
+# API Contract: User Management Endpoints
+
+**Feature**: `002-symfony-jwt-auth`  
+**Version**: v1  
+**Base URL**: `/api/v1`  
+**Content-Type**: `application/json`  
+**Auth scheme**: `Authorization: Bearer <access_token>`  
+**Required role**: `ROLE_ADMIN` for all endpoints in this contract (enforced via `access_control` in `security.yaml`)
+
+---
+
+## GET /api/v1/users
+
+List all non-deleted users.
+
+### Query Parameters
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `page` | int | 1 | Pagination page |
+| `limit` | int | 20 | Results per page |
+| `active` | bool | — | Filter by `is_active` |
+
+### Response — 200 OK
+
+```json
+{
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "alice@example.com",
+      "first_name": "Alice",
+      "last_name": "Dupont",
+      "role": "ROLE_ADMIN",
+      "is_active": true,
+      "permissions": ["meeting.read", "meeting.create"],
+      "created_at": "2026-03-31T10:00:00+00:00"
+    }
+  ],
+  "meta": {
+    "total": 42,
+    "page": 1,
+    "limit": 20
+  }
+}
+```
+
+---
+
+## POST /api/v1/users
+
+Create a new user account (admin-only; no public self-registration).
+
+### Request
+
+```json
+{
+  "email": "newuser@example.com",
+  "password": "SecurePass123!",
+  "first_name": "Bob",
+  "last_name": "Martin",
+  "role": "ROLE_USER",
+  "permissions": ["meeting.read", "transcript.read"]
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| `email` | string | ✅ | Valid email, unique |
+| `password` | string | ✅ | Min 8 chars |
+| `first_name` | string | ✅ | 1–100 chars |
+| `last_name` | string | ✅ | 1–100 chars |
+| `role` | string | ✅ | `ROLE_ADMIN` or `ROLE_USER` |
+| `permissions` | string[] | ❌ | Must be valid permission keys |
+
+### Response — 201 Created
+
+```json
+{
+  "id": "660e9500-f30c-52e5-b827-557766551111",
+  "email": "newuser@example.com",
+  "first_name": "Bob",
+  "last_name": "Martin",
+  "role": "ROLE_USER",
+  "is_active": true,
+  "permissions": ["meeting.read", "transcript.read"],
+  "created_at": "2026-03-31T12:00:00+00:00"
+}
+```
+
+### Responses — Error
+
+| Code | Condition | Body |
+|------|-----------|------|
+| 409 | Email already exists | `{ "code": 409, "message": "Email already in use." }` |
+| 422 | Validation failure | `{ "code": 422, "errors": { "email": ["Not a valid email."] } }` |
+
+---
+
+## GET /api/v1/users/{id}
+
+Retrieve a single user by UUID.
+
+### Response — 200 OK
+
+Same schema as a single item in `GET /api/v1/users`.
+
+### Responses — Error
+
+| Code | Condition |
+|------|-----------|
+| 404 | User not found or soft-deleted |
+
+---
+
+## PATCH /api/v1/users/{id}
+
+Partially update a user (profile fields, role, active status).
+
+### Request (partial)
+
+```json
+{
+  "first_name": "Robert",
+  "is_active": false
+}
+```
+
+### Response — 200 OK
+
+Updated user object (same schema as GET /api/v1/users/{id}).
+
+### Responses — Error
+
+| Code | Condition |
+|------|-----------|
+| 404 | User not found |
+| 422 | Validation failure |
+| 409 | Email conflict |
+
+---
+
+## DELETE /api/v1/users/{id}
+
+Soft-delete a user (sets `deleted_at`). Admin cannot delete their own account.
+
+### Response — 204 No Content
+
+### Responses — Error
+
+| Code | Condition | Body |
+|------|-----------|------|
+| 404 | User not found | |
+| 403 | Admin attempting self-deletion | `{ "code": 403, "message": "Cannot delete your own account." }` |
+
+---
+
+## PUT /api/v1/users/{id}/permissions
+
+Replace the full permission set for a user.
+
+### Request
+
+```json
+{
+  "permissions": ["meeting.read", "meeting.create", "transcript.read"]
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| `permissions` | string[] | ✅ | Must be valid permission keys from the Permission table |
+
+### Response — 200 OK
+
+```json
+{
+  "id": "550e8400-...",
+  "permissions": ["meeting.read", "meeting.create", "transcript.read"]
+}
+```
+
+### Responses — Error
+
+| Code | Condition | Body |
+|------|-----------|------|
+| 404 | User not found | |
+| 422 | Unknown permission key | `{ "code": 422, "errors": { "permissions": ["Unknown: 'invalid.key'"] } }` |
+
+---
+
+## GET /api/v1/permissions
+
+List all available permission keys. Used by the frontend to populate permission pickers.
+
+### Response — 200 OK
+
+```json
+{
+  "data": [
+    { "key": "meeting.read", "description": "View meetings" },
+    { "key": "meeting.create", "description": "Create meetings" },
+    { "key": "meeting.update", "description": "Edit meetings" },
+    { "key": "meeting.delete", "description": "Delete meetings" },
+    { "key": "transcript.read", "description": "View transcripts" },
+    { "key": "transcript.create", "description": "Trigger transcription" },
+    { "key": "summary.read", "description": "View summaries" },
+    { "key": "analytics.read", "description": "View analytics" }
+  ]
+}
+```
+
+**Security**: `ROLE_ADMIN`
+
+---
+
+## Error Response Format (Global)
+
+All error responses follow this structure:
+
+```json
+{
+  "code": 403,
+  "message": "Access Denied.",
+  "errors": {}
+}
+```
+
+Standard HTTP codes used:
+- `400` — Bad request / malformed JSON
+- `401` — Unauthenticated (missing or invalid JWT)
+- `403` — Forbidden (authenticated but lacks permission)
+- `404` — Resource not found
+- `409` — Conflict (e.g., duplicate email)
+- `422` — Validation error
+- `500` — Internal server error

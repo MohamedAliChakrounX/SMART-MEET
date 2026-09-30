@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+AI/models/
+AI/uploads/
+AI/transcription/
+AI/pv/
+AI/behavioral/
+*.log
+AI/server_logs.txt
+
+# Environment folders
+.venv/
+venv/
+ENV/
+env/
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,52 @@
+api_login_check:
+    path: /api/v1/auth/login
+    methods: [POST]
+
+api_token_refresh:
+    path: /api/token/refresh
+    methods: [POST]
+
+api_logout:
+    path: /api/v1/auth/logout
+    methods: [POST]
+    controller: App\Controller\AuthController::logout
+
+api_me:
+    path: /api/v1/auth/me
+    methods: [GET]
+    controller: App\Controller\AuthController::me
+
+api_users:
+    resource: ../../src/Controller/UserController.php
+    type: attribute
+    prefix: /api/v1/users
+
+api_meetings:
+    resource: ../../src/Controller/MeetingController.php
+    type: attribute
+    prefix: /api/v1/meetings
+
+api_transcripts:
+    resource: ../../src/Controller/TranscriptController.php
+    type: attribute
+    prefix: /api/v1/meetings
+
+api_summaries:
+    resource: ../../src/Controller/SummaryController.php
+    type: attribute
+    prefix: /api/v1/summaries
+
+api_analytics:
+    resource: ../../src/Controller/AnalyticsController.php
+    type: attribute
+    prefix: /api/v1/meetings
+
+api_internal_webhooks:
+    resource: ../../src/Controller/InternalWebhookController.php
+    type: attribute
+    prefix: /api/v1/internal/meetings
+
+health_check:
+    path: /health
+    methods: [GET]
+    controller: App\Controller\HealthController::health

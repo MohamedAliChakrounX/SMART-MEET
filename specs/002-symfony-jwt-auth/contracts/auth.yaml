@@ -1,0 +1,140 @@
+# API Contract: Authentication Endpoints
+
+**Feature**: `002-symfony-jwt-auth`  
+**Version**: v1  
+**Base URL**: `/api/v1`  
+**Content-Type**: `application/json` (all requests and responses)  
+**Auth scheme**: `Authorization: Bearer <access_token>`
+
+---
+
+## POST /api/v1/auth/login
+
+Authenticate a user with email + password. Returns a JWT access token and a refresh token.
+
+### Request
+
+```json
+{
+  "email": "user@example.com",
+  "password": "plaintext-password"
+}
+```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| `email` | string | ✅ | Valid email format |
+| `password` | string | ✅ | Non-empty |
+
+### Response — 200 OK
+
+```json
+{
+  "token": "eyJhbGciOiJSUzI1NiJ9...",
+  "refresh_token": "a1b2c3d4...",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "first_name": "Alice",
+    "last_name": "Dupont",
+    "role": "ROLE_ADMIN",
+    "redirect_to": "/admin"
+  }
+}
+```
+
+**`redirect_to` logic**:  
+- `ROLE_ADMIN` → `/admin`  
+- `ROLE_USER` → `/dashboard`
+
+### Responses — Error
+
+| Code | Condition | Body |
+|------|-----------|------|
+| 401 | Invalid credentials | `{ "code": 401, "message": "Invalid credentials." }` |
+| 400 | Missing / malformed body | `{ "code": 400, "message": "Bad request." }` |
+
+**Security**: `PUBLIC_ACCESS` — no JWT required.
+
+---
+
+## POST /api/token/refresh
+
+Exchange a valid refresh token for a new access token.
+
+### Request
+
+```json
+{
+  "refresh_token": "a1b2c3d4..."
+}
+```
+
+### Response — 200 OK
+
+```json
+{
+  "token": "eyJhbGciOiJSUzI1NiJ9...",
+  "refresh_token": "e5f6g7h8..."
+}
+```
+
+> Refresh token rotation is enabled: the old refresh token is invalidated and a new one is issued.
+
+### Responses — Error
+
+| Code | Condition | Body |
+|------|-----------|------|
+| 401 | Refresh token expired / invalid | `{ "code": 401, "message": "JWT Refresh Token Not Found" }` |
+
+**Security**: `PUBLIC_ACCESS` (handled by gesdinet bundle).
+
+---
+
+## POST /api/v1/auth/logout
+
+Invalidate the current access token (adds JTI to the denylist).
+
+### Request
+
+Headers: `Authorization: Bearer <access_token>`  
+Body: *(empty)*
+
+### Response — 200 OK
+
+```json
+{
+  "message": "Logged out successfully."
+}
+```
+
+### Responses — Error
+
+| Code | Condition | Body |
+|------|-----------|------|
+| 401 | No token / expired token | `{ "code": 401, "message": "JWT Token not found." }` |
+
+**Security**: `IS_AUTHENTICATED_FULLY`
+
+---
+
+## GET /api/v1/auth/me
+
+Return the currently authenticated user's profile and permissions.
+
+### Response — 200 OK
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "user@example.com",
+  "first_name": "Alice",
+  "last_name": "Dupont",
+  "role": "ROLE_USER",
+  "is_active": true,
+  "permissions": ["meeting.read", "transcript.read"],
+  "created_at": "2026-03-31T10:00:00+00:00"
+}
+```
+
+**Security**: `IS_AUTHENTICATED_FULLY`

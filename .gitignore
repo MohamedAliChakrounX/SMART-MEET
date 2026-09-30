@@ -1,0 +1,95 @@
+# Project-wide ignores
+node_modules/
+vendor/
+dist/
+var/
+__pycache__/
+*.pyc
+*.pyo
+
+# Python virtual environments
+venv/
+.venv/
+env/
+AI/transcription/venv/
+AI/chatbot/venv/
+
+# AI Models and heavy binary weights (exceeds GitHub 100MB limit)
+AI/models/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
+
+# Audio/Video uploads and raw recordings (very heavy)
+AI/uploads/
+AI/chatbot/uploads/
+*.wav
+*.mp3
+*.m4a
+*.ogg
+*.flac
+*.aac
+photos_video_demo/demo_PFE.mp4
+
+# Binary executables and debug symbols
+*.exe
+*.dll
+*.pdb
+*.so
+*.dylib
+
+# Flutter / Dart build artifacts
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+Frontend-Mobile/build/
+Frontend-Mobile/.dart_tool/
+Frontend-Mobile/windows/flutter/ephemeral/
+Frontend-Mobile/android/.gradle/
+Frontend-Mobile/android/app/build/
+
+# Logs
+*.log
+LOGs/
+Backend/var/log/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Temporary and test artifacts
+/tmp/
+*.tmp
+*.txt.bak
+*.txt
+!specs/**/*.txt
+Backend/error.txt
+Backend/test_*.php
+Backend/test_*.txt
+Backend/openssl_minimal.cnf
+Backend/force_password.php
+
+# PHP & Python test cache
+.phpunit.cache/
+.pytest_cache/
+
+# JWT keys (security)
+config/jwt/
+Backend/config/jwt/*.pem

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Procès-Verbal - {{ dto.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .header-table td {
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            vertical-align: middle;
+        }
+        .logo-cell {
+            width: 20%;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            color: #1e3a8a;
+            background-color: #ffffff;
+        }
+        .title-cell {
+            width: 55%;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13pt;
+            background-color: #ffffff;
+        }
+        .meta-cell {
+            width: 25%;
+            font-size: 9pt;
+            background-color: #ffffff;
+            line-height: 1.4;
+        }
+        .section-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .section-table td, .section-table th {
+            border: 1px solid #d1d5db;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .label-bg {
+            background-color: #d9d9d9;
+            font-weight: bold;
+            width: 20%;
+        }
+        .value-cell {
+            background-color: #ffffff;
+        }
+        .section-title-row {
+            background-color: #d9d9d9;
+            font-weight: bold;
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 10pt;
+        }
+        .header-bg {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            font-size: 9.5pt;
+        }
+        .non-renseigne {
+            font-style: italic;
+            color: #9ca3af;
+        }
+        .points-content {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 8pt;
+            color: #6b7280;
+            text-align: center;
+            border-top: 1px solid #d1d5db;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Block -->
+    <table class="header-table">
+        <tr>
+            <td class="logo-cell">SmartMeet</td>
+            <td class="title-cell">PV de Réunion</td>
+            <td class="meta-cell">
+                <strong>Version :</strong> 01<br>
+                <strong>Date :</strong> {{ "now"|date("d/m/Y") }}<br>
+                <strong>Code :</strong> FOR-01-SFM-2026
+            </td>
+        </tr>
+    </table>
+
+    <!-- Metadata Section -->
+    <table class="section-table">
+        <tr>
+            <td class="label-bg">Type de la réunion</td>
+            <td class="value-cell" colspan="3"><strong>Interne</strong></td>
+        </tr>
+        <tr>
+            <td class="label-bg">Date de la réunion</td>
+            <td class="value-cell" style="width: 30%;">{{ dto.date }}</td>
+            <td class="label-bg" style="width: 20%;">Lieu de la réunion</td>
+            <td class="value-cell" style="width: 30%;">SFM-RDC</td>
+        </tr>
+        <tr>
+            <td class="label-bg" style="height: 50px;">Objet De la Réunion</td>
+            <td class="value-cell" colspan="3" style="vertical-align: middle;">{{ dto.title }}</td>
+        </tr>
+    </table>
+
+    <!-- Résumé Exécutif Section -->
+    <div class="section-title-row">Résumé Exécutif</div>
+    <table class="section-table" style="margin-top: -1px; margin-bottom: 20px;">
+        <tr>
+            <td class="value-cell" style="padding: 10px; line-height: 1.5;">
+                <div class="points-content">{{ dto.executiveSummary|default('Non renseigné') }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Participants Section -->
+    <div class="section-title-row">Liste des participants</div>
+    <table class="section-table" style="margin-top: -1px;">
+        <thead>
+            <tr class="header-bg">
+                <th style="width: 30%;">Nom et Prénom</th>
+                <th style="width: 30%;">Fonction</th>
+                <th style="width: 20%;">Signature</th>
+                <th style="width: 20%;">Commentaire</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for participant in dto.participants %}
+                <tr>
+                    <td>{{ participant.name }}</td>
+                    <td>{{ participant.role }}</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td class="non-renseigne">Non renseigné</td>
+                    <td class="non-renseigne">Non renseigné</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Points Abordés Section -->
+    <table class="section-table">
+        <tr>
+            <td class="label-bg" style="width: 20%; height: 100px; vertical-align: middle; text-align: center;">Points abordés</td>
+            <td class="value-cell" style="width: 80%;" colspan="3">
+                <div class="points-content">{% for decision in dto.decisions %}• {{ decision }}<br>{% else %}<span class="non-renseigne">Non renseigné</span>{% endfor %}</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Liste de Diffusion Section -->
+    <div class="section-title-row">Liste de diffusion</div>
+    <table class="section-table" style="margin-top: -1px;">
+        <tbody>
+            {% for participant in dto.participants %}
+                <tr>
+                    <td style="width: 50%;">{{ participant.name }}</td>
+                    <td style="width: 50%;"></td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td class="non-renseigne" colspan="2">Non renseigné</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Actions Proposés Section -->
+    <div class="section-title-row">Actions proposés</div>
+    <table class="section-table" style="margin-top: -1px;">
+        <thead>
+            <tr class="header-bg">
+                <th style="width: 35%;">Action</th>
+                <th style="width: 20%;">Responsable</th>
+                <th style="width: 12%;">Priorité</th>
+                <th style="width: 15%;">Date limite de réalisation</th>
+                <th style="width: 10%;">Efficacité</th>
+                <th style="width: 8%;">Etat</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for action in dto.actionItems %}
+                <tr>
+                    <td>{{ action.description|default('Non renseigné') }}</td>
+                    <td>{{ action.responsable|default('Non renseigné') }}</td>
+                    <td>{{ action.priorite|default('Majeure') }}</td>
+                    <td>{{ action.echeance|default('Non renseigné') }}</td>
+                    <td>{{ action.efficacite|default('') }}</td>
+                    <td>{{ action.statut|default('Non renseigné') }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6" class="non-renseigne" style="text-align: center;">Non renseigné</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Document généré par SmartMeet le {{ "now"|date("d/m/Y H:i") }}<br>
+        Date de génération du PV : {{ dto.pvGeneratedAt }} | Niveau de détail : {{ dto.detailLevel }}
+    </div>
+</body>
+</html>
